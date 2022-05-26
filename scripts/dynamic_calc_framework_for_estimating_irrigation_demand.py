@@ -152,7 +152,7 @@ class CalcFramework(DynamicModel):
                                                vos.netcdf2PCRobjClone(ncFile            = self.input_files["kc_nonpaddy_daily"],\
                                                                       varName           = "automatic",\
                                                                       dateInput         = self.modelTime.fulldate,\
-                                                                      useDoy            = None,\
+                                                                      useDoy            = "Yes",\
                                                                       cloneMapFileName  = self.cloneMapFileName), 
                                                0.0)
         # - monthly aggregation 
@@ -167,7 +167,7 @@ class CalcFramework(DynamicModel):
                                                vos.netcdf2PCRobjClone(ncFile            = self.input_files["kc_paddy_daily"],\
                                                                       varName           = "automatic",\
                                                                       dateInput         = self.modelTime.fulldate,\
-                                                                      useDoy            = None,\
+                                                                      useDoy            = "Yes",\
                                                                       cloneMapFileName  = self.cloneMapFileName), 
                                                0.0)
         # - monthly aggregation 
