@@ -257,7 +257,7 @@ class CalcFramework(DynamicModel):
                                           self.modelTime.day,0)
             varFields = {}
             varFields["estimate_irrigation_demand"] = pcr.pcr2numpy(self.estimate_irrigation_demand, vos.MV)
-            self.netcdf_report.dataList2NetCDF(self.output_files["industry_water_demand"],\
+            self.netcdf_report.dataList2NetCDF(self.output_files["estimate_irrigation_demand"],\
                                                ["estimate_irrigation_demand"],\
                                                varFields,\
                                                timeStamp)
