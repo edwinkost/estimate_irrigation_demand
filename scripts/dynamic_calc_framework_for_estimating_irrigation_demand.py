@@ -192,9 +192,12 @@ class CalcFramework(DynamicModel):
         # calculate monthly irrigation water requirement - unit: km3/month
         if self.modelTime.isLastDayOfMonth():
 
+            # set minimum kc
+            minimum_kc = 0.2
+            
             # crop requirement (still not including efficiency) - unit: m3/month
-            self.crop_requirement = self.kc_nonpaddy_monthly_average * self.et0 * self.cell_area_nonpaddy +\
-                                          self.kc_paddy_monthly_average * self.et0 * self.cell_area_paddy
+            self.crop_requirement = pcr.max(minimum_kc, self.kc_nonpaddy_monthly_average) * self.et0 * self.cell_area_nonpaddy +\
+                                    pcr.max(minimum_kc, self.kc_paddy_monthly_average   ) * self.et0 * self.cell_area_paddy
             # - km3/month
             self.crop_requirement = self.crop_requirement / 1e9
 
