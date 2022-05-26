@@ -101,6 +101,7 @@ class CalcFramework(DynamicModel):
         # re-calculate current model time using current pcraster timestep value
         self.modelTime.update(self.currentTimeStep())
 
+
         # read yearly irrigated area (input files are originally in hectar and here converted to m2)
         if self.modelTime.doy == 1:
             
@@ -120,6 +121,7 @@ class CalcFramework(DynamicModel):
             # paddy cell area (m2)
             self.cell_area_paddy    = self.irrigated_area * self.paddy_fraction_over_irrigated_area
         
+
         # read efficiency - dimensionless
         if self.modelTime.doy == 1:
 
