@@ -292,7 +292,7 @@ def main():
     # - irrigation efficiency  
     input_files["efficiency"]               = input_files["pgb_inp_dir"] + "/general/efficiency.nc"
     # - irrigated_area_in_hectar (m2.m-2)   
-    input_files["irrigated_area_in_hectar"] = input_files["pgb_inp_dir"] + "/historical_and_ssp_files/irrigated_areas_irrigated_areas_historical_1960-2019.nc"
+    input_files["irrigated_area_in_hectar"] = input_files["pgb_inp_dir"] + "/historical_and_ssp_files/irrigated_areas_historical_1960-2019.nc"
 
 
     # input from PCR-GLOBWB run OUTPUT files
