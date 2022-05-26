@@ -102,7 +102,7 @@ class CalcFramework(DynamicModel):
         self.modelTime.update(self.currentTimeStep())
 
         # read yearly irrigated area (input files are originally in hectar and here converted to m2)
-        if self.modelTime.day == 1:
+        if self.modelTime.doy == 1:
             
             irrigated_area_in_hectar = pcr.cover(
                                        vos.netcdf2PCRobjClone(ncFile            = self.input_files["irrigated_area_in_hectar"],\
@@ -120,10 +120,13 @@ class CalcFramework(DynamicModel):
             # paddy cell area (m2)
             self.cell_area_paddy    = self.irrigated_area * self.paddy_fraction_over_irrigated_area
         
-            # read efficiency - dimensionless
+        # read efficiency - dimensionless
+        if self.modelTime.doy == 1:
+
             self.efficiency = vos.readPCRmapClone(v = self.input_files["efficiency"], \
                                                     cloneMapFileName = self.cloneMapFileName, \
                                                     tmpDir = self.tmpDir)
+
             # extrapolate efficiency map as done in PCR-GLOBWB 
             window_size = 1.25 * pcr.clone().cellSize()
             window_size = min(window_size, min(pcr.clone().nrRows(), pcr.clone().nrCols())*pcr.clone().cellSize())
@@ -140,6 +143,7 @@ class CalcFramework(DynamicModel):
                 pass
             self.efficiency = pcr.cover(self.efficiency, 1.0)
             self.efficiency = pcr.max(0.1, self.efficiency)
+
 
         # get crop coefficient values (daily) for nonpaddy and calculate its monthly average values - dimensionless
         self.kc_nonpaddy_daily     = pcr.cover(
