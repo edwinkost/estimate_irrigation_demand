@@ -278,7 +278,7 @@ def main():
     
     # for testing
     startDate = "2000-01-01"
-    endDate   = "2000-12-31"
+    endDate   = "2015-12-31"
 
     # a dictionary containing input files
     input_files = {}
@@ -318,7 +318,7 @@ def main():
     output_files = {}
 
     output_files["folder"]                        = "/scratch-shared/edwin/irrigation_demand_aqueduct/test/"
-    output_files["estimate_irrigation_demand"]    = output_files["folder"] + "/estimateIrrigationDemand_monthTot_output_%4s-01-31_to_%4s-12-31.nc" 
+    output_files["estimate_irrigation_demand"]    = output_files["folder"] + "/estimateIrrigationDemand_monthTot_output.nc" 
 
     # make output folder
     output_folder = output_files["folder"]
