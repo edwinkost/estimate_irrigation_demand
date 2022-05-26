@@ -279,13 +279,13 @@ def main():
     startDate = "1960-01-01"
     endDate   = "2019-12-31"
     
-    # for testing
-    startDate = "2000-01-01"
-    endDate   = "2005-12-31"
+    # ~ # for testing
+    # ~ startDate = "2000-01-01"
+    # ~ endDate   = "2005-12-31"
 
-    # for testing
-    startDate = "2000-01-01"
-    endDate   = "2001-12-31"
+    # ~ # for testing
+    # ~ startDate = "2000-01-01"
+    # ~ endDate   = "2001-12-31"
 
     # a dictionary containing input files
     input_files = {}
