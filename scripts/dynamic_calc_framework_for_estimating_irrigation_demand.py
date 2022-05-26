@@ -89,7 +89,7 @@ class CalcFramework(DynamicModel):
 
         # make a netcdf output file for monthly estimate irrigation demand
         attributeDictionary['title'      ]   = "Monthly estimate irrigation demand (km3/month)."
-        attributeDictionary['description']   = "The files are created based on the 5 arcmin PCR-GLOBWB runs for the WRI (World Resources Institute) Aqueduct project 2021. "
+        attributeDictionary['description']   = "The files are created based on the 5 arcmin PCR-GLOBWB runs for the project WRI (World Resources Institute) Aqueduct 2021. "
         self.netcdf_report.createNetCDF(self.output_files["estimate_irrigation_demand"],\
                                         "estimate_irrigation_demand",\
                                         "km3.month-1",\
@@ -113,7 +113,7 @@ class CalcFramework(DynamicModel):
                                                               cloneMapFileName  = self.cloneMapFileName), 
                                                 0.0)
             # irrigated area in m2
-            self.irrigated_area     = irrigated_area_in_hectar / 10000
+            self.irrigated_area     = irrigated_area_in_hectar * 10000.
         
             # nonpaddy cell area (m2)
             self.cell_area_nonpaddy = self.irrigated_area * self.nonpaddy_fraction_over_irrigated_area
@@ -147,7 +147,7 @@ class CalcFramework(DynamicModel):
             self.efficiency = pcr.max(0.1, self.efficiency)
 
 
-        # get crop coefficient values (daily) for nonpaddy and calculate its monthly average values - dimensionless
+        # get crop coefficient values (daily) for nonpaddy and calculate monthly average values - dimensionless
         self.kc_nonpaddy_daily     = pcr.cover(
                                                vos.netcdf2PCRobjClone(ncFile            = self.input_files["kc_nonpaddy_daily"],\
                                                                       varName           = "automatic",\
@@ -162,7 +162,7 @@ class CalcFramework(DynamicModel):
         if self.modelTime.isLastDayOfMonth():
             self.kc_nonpaddy_monthly_average = self.kc_nonpaddy_monthly_agg / self.modelTime.day
         
-        # get crop coefficient values (daily) for paddy and calculate its monthly average values - dimensionless
+        # get crop coefficient values (daily) for paddy and calculate monthly average values - dimensionless
         self.kc_paddy_daily        = pcr.cover(
                                                vos.netcdf2PCRobjClone(ncFile            = self.input_files["kc_paddy_daily"],\
                                                                       varName           = "automatic",\
@@ -276,9 +276,9 @@ def main():
     startDate = "1960-01-01"
     endDate   = "2019-12-31"
     
-    # ~ # for testing
-    # ~ startDate = "2000-01-01"
-    # ~ endDate   = "2015-12-31"
+    # for testing
+    startDate = "2000-01-01"
+    endDate   = "2005-12-31"
 
     # a dictionary containing input files
     input_files = {}
@@ -297,7 +297,7 @@ def main():
     input_files["kc_paddy_daily"]           = input_files["pgb_inp_dir"] + "/general/paddy_cropfactor_filled.nc"
     # - irrigation efficiency  
     input_files["efficiency"]               = input_files["pgb_inp_dir"] + "/general/efficiency.nc"
-    # - irrigated_area_in_hectar (m2.m-2)   
+    # - irrigated_area_in_hectar 
     input_files["irrigated_area_in_hectar"] = input_files["pgb_inp_dir"] + "/historical_and_ssp_files/irrigated_areas_historical_1960-2019.nc"
 
 
