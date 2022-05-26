@@ -90,7 +90,6 @@ class CalcFramework(DynamicModel):
         # make a netcdf output file for monthly estimate irrigation demand
         attributeDictionary['title'      ]   = "Monthly estimate irrigation demand (km3/month)."
         attributeDictionary['description']   = "The files are created based on the 5 arcmin PCR-GLOBWB runs for the WRI (World Resources Institute) Aqueduct project 2021. "
-        self.output_files["estimate_irrigation_demand"] = self.output_folder + self.output_files["irrigated_areas"]
         self.netcdf_report.createNetCDF(self.output_files["estimate_irrigation_demand"],\
                                         "estimate_irrigation_demand",\
                                         "km3.month-1",\
