@@ -54,6 +54,20 @@ class CalcFramework(DynamicModel):
                                                    tmpDir = self.tmpDir
                                                    )
         
+        # nonpaddy and paddy fractions - unit: m2.m-2 
+        nonpaddy_fraction = vos.readPCRmapClone(v = self.input_files["nonpaddy_fraction"], \
+                                                cloneMapFileName = self.cloneMapFileName, \
+                                                tmpDir = self.tmpDir)
+        paddy_fraction    = vos.readPCRmapClone(v = self.input_files["paddy_fraction"], \
+                                                cloneMapFileName = self.cloneMapFileName, \
+                                                tmpDir = self.tmpDir)
+        # for cells with irrigated areas, their paddy and nonpaddy fractions/distributions are calculated as the following
+        # paddy fraction over irrigated area only - unit: m2.m-2
+        self.paddy_fraction_over_irrigated_area    = pcr.ifthenelse(nonpaddy_fraction + paddy_fraction > 0.0, paddy_fraction / (nonpaddy_fraction + paddy_fraction), 0.0)                                   
+        self.paddy_fraction_over_irrigated_area    = pcr.min(1.0, self.paddy_fraction_over_irrigated_area)
+        # nonpaddy fraction over irrigated area only - unit: m2.m-2
+        self.nonpaddy_fraction_over_irrigated_area = pcr.max(0.0, 1.0 - self.paddy_fraction_over_irrigated_area)                                   
+        
         # object for reporting
         self.netcdf_report = OutputNetcdf(mapattr_dict = None,\
                                           cloneMapFileName = cloneMapFileName,\
@@ -64,7 +78,7 @@ class CalcFramework(DynamicModel):
         
     def initial(self): 
 
-        # general attributes for netcdf files
+        # general attributes for netcdf output files
         attributeDictionary = {}
         attributeDictionary['institution']   = "Department of Physical Geography, Utrecht University, the Netherlands"
         attributeDictionary['history'    ]   = "Files are created by Edwin H. Sutanudjaja on " + str(datetime.datetime.now())
@@ -73,13 +87,13 @@ class CalcFramework(DynamicModel):
         attributeDictionary['comment'    ]   = "See description."
         attributeDictionary['disclaimer' ]   = "Great care was exerted to prepare these data. Notwithstanding, use of the model and/or its outcome is the sole responsibility of the user." 
 
-        # make a netcdf file for yearly irrigation areas
+        # make a netcdf output file for monthly estimate irrigation demand
         attributeDictionary['title'      ]   = "Monthly estimate irrigation demand (km3/month)."
-        attributeDictionary['description']   = "The files are created based on the 5 arcmin PCR-GLOBWB runs for the Aqueduct project 2021. "
+        attributeDictionary['description']   = "The files are created based on the 5 arcmin PCR-GLOBWB runs for the WRI (World Resources Institute) Aqueduct project 2021. "
         self.output_files["estimate_irrigation_demand"] = self.output_folder + self.output_files["irrigated_areas"]
         self.netcdf_report.createNetCDF(self.output_files["estimate_irrigation_demand"],\
                                         "estimate_irrigation_demand",\
-                                        "km3",\
+                                        "km3.month-1",\
                                         "estimate_irrigation_demand",\
                                         attributeDictionary)
 
@@ -87,18 +101,55 @@ class CalcFramework(DynamicModel):
         
         # re-calculate current model time using current pcraster timestep value
         self.modelTime.update(self.currentTimeStep())
-        
 
-        # nonpaddy cell area (m2)
-        self.cell_area_nonpaddy = 
-
-        # paddy cell area (m2)
-        self.cell_area_paddy    = 
+        # read yearly irrigated area (input files are originally in hectar and here converted to m2)
+        if self.modelTime.day == 1:
+            
+            irrigated_area_in_hectar = pcr.cover(
+                                       vos.netcdf2PCRobjClone(ncFile            = self.input_files["irrigated_area_in_hectar"],\
+                                                              varName           = "automatic",\
+                                                              dateInput         = self.modelTime.fulldate,\
+                                                              useDoy            = None,\
+                                                              cloneMapFileName  = self.cloneMapFileName), 
+                                                0.0)
+            # irrigated area in m2
+            self.irrigated_area     = irrigated_area_in_hectar / 10000
         
+            # nonpaddy cell area (m2)
+            self.cell_area_nonpaddy = self.irrigated_area * self.nonpaddy_fraction_over_irrigated_area
 
+            # paddy cell area (m2)
+            self.cell_area_paddy    = self.irrigated_area * self.paddy_fraction_over_irrigated_area
         
+            # read efficiency - dimensionless
+            self.efficiency = vos.readPCRmapClone(v = self.input_files["efficiency"], \
+                                                    cloneMapFileName = self.cloneMapFileName, \
+                                                    tmpDir = self.tmpDir)
+            # extrapolate efficiency map as done in PCR-GLOBWB 
+            window_size = 1.25 * pcr.clone().cellSize()
+            window_size = min(window_size, min(pcr.clone().nrRows(), pcr.clone().nrCols())*pcr.clone().cellSize())
+            try:
+                self.efficiency = pcr.cover(self.efficiency, pcr.windowaverage(self.efficiency, window_size))
+                self.efficiency = pcr.cover(self.efficiency, pcr.windowaverage(self.efficiency, window_size))
+                self.efficiency = pcr.cover(self.efficiency, pcr.windowaverage(self.efficiency, window_size))
+                self.efficiency = pcr.cover(self.efficiency, pcr.windowaverage(self.efficiency, window_size))
+                self.efficiency = pcr.cover(self.efficiency, pcr.windowaverage(self.efficiency, window_size))
+                self.efficiency = pcr.cover(self.efficiency, pcr.windowaverage(self.efficiency, 0.75))
+                self.efficiency = pcr.cover(self.efficiency, pcr.windowaverage(self.efficiency, 1.00))
+                self.efficiency = pcr.cover(self.efficiency, pcr.windowaverage(self.efficiency, 1.50))
+            except:
+                pass
+            self.efficiency = pcr.cover(self.efficiency, 1.0)
+            self.efficiency = pcr.max(0.1, self.efficiency)
+
         # get crop coefficient values (daily) for nonpaddy and calculate its monthly average values - dimensionless
-        self.kc_nonpaddy_daily     = 
+        self.kc_nonpaddy_daily     = pcr.cover(
+                                               vos.netcdf2PCRobjClone(ncFile            = self.input_files["kc_nonpaddy_daily"],\
+                                                                      varName           = "automatic",\
+                                                                      dateInput         = self.modelTime.fulldate,\
+                                                                      useDoy            = None,\
+                                                                      cloneMapFileName  = self.cloneMapFileName), 
+                                               0.0)
         # - monthly aggregation 
         if self.modelTime.day == 1: self.kc_nonpaddy_monthly_agg = pcr.scalar(0.0)
         self.kc_nonpaddy_monthly_agg += self.kc_nonpaddy_daily
@@ -107,17 +158,33 @@ class CalcFramework(DynamicModel):
             self.kc_nonpaddy_monthly_average = self.kc_nonpaddy_monthly_agg / self.modelTime.day
         
         # get crop coefficient values (daily) for paddy and calculate its monthly average values - dimensionless
-        self.kc_paddy_daily = 
-        
+        self.kc_paddy_daily        = pcr.cover(
+                                               vos.netcdf2PCRobjClone(ncFile            = self.input_files["kc_paddy_daily"],\
+                                                                      varName           = "automatic",\
+                                                                      dateInput         = self.modelTime.fulldate,\
+                                                                      useDoy            = None,\
+                                                                      cloneMapFileName  = self.cloneMapFileName), 
+                                               0.0)
+        # - monthly aggregation 
+        if self.modelTime.day == 1: self.kc_paddy_monthly_agg = pcr.scalar(0.0)
+        self.kc_paddy_monthly_agg += self.kc_paddy_daily
+        # - monthly average values
+        if self.modelTime.isLastDayOfMonth():
+            self.kc_paddy_monthly_average = self.kc_paddy_monthly_agg / self.modelTime.day
         
         # get monthly reference potential evaporation - unit: m/month
         if self.modelTime.isLastDayOfMonth():
-            self.et0 = 
+            
+            self.et0_file = self.input_files["et0"] % (str(self.modelTime.year), str(self.modelTime.year))
+            
+            self.et0 = vos.netcdf2PCRobjClone(ncFile            = self.et0_file,\
+                                              varName           = "automatic",\
+                                              dateInput         = self.modelTime.fulldate,\
+                                              useDoy            = None,\
+                                              cloneMapFileName  = self.cloneMapFileName)
 
-        # read efficiency - dimensionless
-        self.efficiency = 
 
-        # calculate monthly irrigation water requirement (still not corrected by precipitation) - unit: km3/month
+        # calculate monthly irrigation water requirement - unit: km3/month
         if self.modelTime.isLastDayOfMonth():
 
             # crop requirement (still not including efficiency) - unit: m3/month
@@ -126,35 +193,59 @@ class CalcFramework(DynamicModel):
             # - km3/month
             self.crop_requirement = self.crop_requirement / 1e9
 
-            # irrigation requirement (including efficiency) - unit: km3/month
+            # irrigation requirement (including efficiency) - unit: km3/month - note this can be supplied by precipitation and irrigation withdrawal 
             self.irrigation_requirement = self.crop_requirement / self.efficiency
 
         
         # get irrigation supply (km3/month): amount of water that has been withdrawn to meet irrigation demand (from PCR-GLOBWB output)
         if self.modelTime.isLastDayOfMonth():
 
-            # ready irrigation supply, but still not including efficiency - unit: m/month
-            self.irrigation_supply = 
+            # read irrigation supply (the one that evaporated; note this is still not including efficiency) - unit: m/month
             
-            # irrigation supply corrected with efficiency - unit: km3/month
+            self.evaporation_from_irrigation_file = self.input_files["evaporation_from_irrigation"] % (str(self.modelTime.year), str(self.modelTime.year)) 
+            
+            # - irrigation supply, but still not including efficiency - unit: m/month - note this consists the ones from precipitation and irrigation withdrawal
+            self.irrigation_supply = vos.netcdf2PCRobjClone(ncFile            = self.evaporation_from_irrigation_file,\
+                                                            varName           = "automatic",\
+                                                            dateInput         = self.modelTime.fulldate,\
+                                                            useDoy            = None,\
+                                                            cloneMapFileName  = self.cloneMapFileName)
+
+            # - irrigation supply corrected with efficiency - unit: km3/month
             self.irrigation_supply = self.irrigation_supply / self.efficiency * self.cell_area_total / 1e9
 
         
         # get irrigation withdrawal (km3/month): amount of water that has been withdrawn to meet irrigation demand (from PCR-GLOBWB output)
         if self.modelTime.isLastDayOfMonth():
-            # irrPaddyWithdrawal + irrNonPaddyWithdrawal (output from PCR-GLOBWB runs) - unit: m/month
-            self.irrPaddyWithdrawal    = 
+
+            # irrNonPaddyWithdrawal (output from PCR-GLOBWB runs) - unit: m/month
+            self.nonpaddy_irrigation_withdrawal_file = self.input_files["nonpaddy_irrigation_withdrawal"] % (str(self.modelTime.year), str(self.modelTime.year))
+            self.irrNonPaddyWithdrawal = vos.netcdf2PCRobjClone(ncFile            = self.nonpaddy_irrigation_withdrawal_file,\
+                                                                varName           = "automatic",\
+                                                                dateInput         = self.modelTime.fulldate,\
+                                                                useDoy            = None,\
+                                                                cloneMapFileName  = self.cloneMapFileName)
             
-            self.irrNonPaddyWithdrawal =
+            # irrPaddyWithdrawal (output from PCR-GLOBWB runs) - unit: m/month
+            self.paddy_irrigation_withdrawal_file = self.input_files["paddy_irrigation_withdrawal"] % (str(self.modelTime.year), str(self.modelTime.year))
+            self.irrPaddyWithdrawal    = vos.netcdf2PCRobjClone(ncFile            = self.paddy_irrigation_withdrawal_file,\
+                                                                varName           = "automatic",\
+                                                                dateInput         = self.modelTime.fulldate,\
+                                                                useDoy            = None,\
+                                                                cloneMapFileName  = self.cloneMapFileName)
             
-            # irrigation supply (amount of water that has been supplied to meet irrigation demand) - unit: km3/month
+            # total irrigation withdrawal (amount of water that has been supplied to meet irrigation demand) - unit: km3/month
             self.irrigation_withdrawal = (self.irrPaddyWithdrawal + self.irrNonPaddyWithdrawal) * self.cell_area_total / 1e9
             			
 
         # estimate monthly irrigation demand (km3/month)
         if self.modelTime.isLastDayOfMonth():
             
-            self.estimate_irrigation_demand = (self.irrigation_requirement - self.irrigation_supply) + self.irrigation_withdrawal
+            # irrigation water gap - unit: km3.month-1
+            self.irrigation_water_gap       = pcr.max(0.0, self.irrigation_requirement - self.irrigation_supply)
+            
+            # estimate monthly irrigation demand - unit: km3.month-1
+            self.estimate_irrigation_demand = self.irrigation_withdrawal + self.irrigation_water_gap
 
 
         # save monthly irrigation demand and monthly irrigation requirement to files (km3/month)
@@ -166,10 +257,9 @@ class CalcFramework(DynamicModel):
                                           self.modelTime.month,\
                                           self.modelTime.day,0)
             varFields = {}
-            varFields["industryGrossDemand"] = pcr.pcr2numpy(industry_gross_demand, vos.MV)
-            varFields["industryNettoDemand"] = pcr.pcr2numpy(industry_netto_demand, vos.MV)
+            varFields["estimate_irrigation_demand"] = pcr.pcr2numpy(self.estimate_irrigation_demand, vos.MV)
             self.netcdf_report.dataList2NetCDF(self.output_files["industry_water_demand"],\
-                                               ["industryGrossDemand", "industryNettoDemand"],\
+                                               ["estimate_irrigation_demand"],\
                                                varFields,\
                                                timeStamp)
 
@@ -179,41 +269,51 @@ def main():
     
     # starting and end date
     startDate = "1960-01-01"
-    endDate   = "2100-12-31"
+    endDate   = "2019-12-31"
     
-    # ~ # for testing
-    # ~ startDate = "2005-01-01"
-    # ~ endDate   = "2025-12-31"
+    # for testing
+    startDate = "2000-01-01"
+    endDate   = "2015-12-31"
 
     # a dictionary containing input files
     input_files = {}
-    input_files["clone_map"]                  = "/scratch/depfg/sutan101/data/pcrglobwb_gmglob_input/develop/global_05min/cloneMaps/clone_global_05min.map"
-    input_files["cell_area"]                  = "/scratch/depfg/sutan101/data/pcrglobwb_input_arise/develop/global_05min/routing/cell_area/cdo_gridarea_clone_global_05min_correct_lats.nc"
     
-    # - irrigated areas
-    input_files['gmd_paper_irrigation_areas'] = "/scratch/depfg/sutan101/data/pcrglobwb_input_arise/develop/global_05min_from_gmd_paper_input/waterUse/irrigation/irrigated_areas/irrigationArea05ArcMin.nc"
-    input_files['hyde_irrigation_areas']      = "/scratch/depfg/sutan101/data/hyde3.2/downloaded_on_2021-08-11_baseline_only/baseline/zip_extracted_1800-2017/netcdf_irr/merged_annual/tot_irri_area_in_hectar_1800-2017_annual.nc"
-    input_files['ssp_two_irrigation_areas']   = "/scratch/depfg/sutan101/data/landcover_glo1_parameters_from_rens_cartesius/irrigated_areas_calculated_by_edwin/ssp2/total_irrigation_areas_in_hectar_ssp2.nc"
-    input_files['ssp_irrigation_areas']       = "/scratch/depfg/sutan101/data/landcover_glo1_parameters_from_rens_cartesius/irrigated_areas_calculated_by_edwin/ssp5/total_irrigation_areas_in_hectar_ssp5.nc"
-    
-    # - domestic demand
-    input_files['glo1_domestic_demand']       = "/scratch/depfg/sutan101/data/water_demand_glo1/05min/historical/domestic_water_demand_1961_to_2014_in_m_per_day_05arcmin.nc"
-    input_files['ssp_two_domestic_demand']    = "/scratch/depfg/sutan101/data/GLO1_rens/WaterDemand/water_demand_domestic_SSP2_2010-2099_5min.nc"
-    input_files['ssp_domestic_demand']        = "/scratch/depfg/sutan101/data/GLO1_rens/WaterDemand/water_demand_domestic_SSP5_2010-2099_5min.nc"
+    # input from PCR-GLOBWB INPUT files
+    # - main folder of pcrglobwb input files 
+    input_files["pgb_inp_dir"] = "/projects/0/dfguu/users/edwin/data/pcrglobwb_input_aqueduct/version_2021-09-16/"
+    # - clone map (-), cell area (m2)
+    input_files["clone_map"]                = input_files["pgb_inp_dir"] + "/general/cloneMaps/clone_global_05min.map"    
+    input_files["cell_area"]                = input_files["pgb_inp_dir"] + "/general/cdo_gridarea_clone_global_05min_correct_lats.nc"
+    # - nonpaddy_fraction and paddy_fraction (notes that this the estimate over the entire cell area (m2.m-2)   
+    input_files["nonpaddy_fraction"]        = input_files["pgb_inp_dir"] + "/general/fractionNonPaddy_extrapolated.map"    
+    input_files["paddy_fraction"]           = input_files["pgb_inp_dir"] + "/general/fractionPaddy_extrapolated.map"
+    # - nonpaddy and paddy kc (dimensionless)  
+    input_files["kc_nonpaddy_daily"]        = input_files["pgb_inp_dir"] + "/general/nonpaddy_cropfactor_filled.nc"    
+    input_files["kc_paddy_daily"]           = input_files["pgb_inp_dir"] + "/general/paddy_cropfactor_filled.nc"
+    # - irrigation efficiency  
+    input_files["efficiency"]               = input_files["pgb_inp_dir"] + "/general/efficiency.nc"
+    # - irrigated_area_in_hectar (m2.m-2)   
+    input_files["irrigated_area_in_hectar"] = input_files["pgb_inp_dir"] + "/historical_and_ssp_files/irrigated_areas_irrigated_areas_historical_1960-2019.nc"
 
-    # - industry demand
-    input_files['glo1_industry_demand']       = "/scratch/depfg/sutan101/data/water_demand_glo1/05min/historical/industrial_water_demand_1961_to_2014_in_m_per_day_05arcmin.nc"
-    input_files['ssp_two_industry_demand']    = "/scratch/depfg/sutan101/data/GLO1_rens/WaterDemand/water_demand_industry_SSP2_2010-2099_5min.nc"
-    input_files['ssp_industry_demand']        = "/scratch/depfg/sutan101/data/GLO1_rens/WaterDemand/water_demand_industry_SSP5_2010-2099_5min.nc"
 
-    
+    # input from PCR-GLOBWB run OUTPUT files
+    # - main folder of pcrglobwb input files 
+    input_files["pgb_out_dir"] = "/projects/0/dfguu2/users/edwin/pcrglobwb_aqueduct_2021_monthly_annual_files/version_2021-09-16/gswp3-w5e5_rerun/historical-reference/begin_from_1960/global/netcdf/"
+    # - monthly reference potential evaporation (m.month-1) 
+    input_files["et0"]                            = input_files["pgb_out_dir"] + "/referencePotET_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
+    # - monthly evaporation_from_irrigation (m.month-1) 
+    input_files["evaporation_from_irrigation"]    = input_files["pgb_out_dir"] + "/evaporation_from_irrigation_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
+
+    # - monthly nonpaddy and paddy irrigation withdrawal (m.month-1) 
+    input_files["nonpaddy_irrigation_withdrawal"] = input_files["pgb_out_dir"] + "/irrNonPaddyWaterWithdrawal_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
+    input_files["paddy_irrigation_withdrawal"]    = input_files["pgb_out_dir"] + "/irrPaddyWaterWithdrawal_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
+
+
     # a dictionary containing output files
     output_files = {}
-    output_files["folder"]                = "/scratch/depfg/sutan101/aqueduct_irrigated_areas_and_water_demands/version_2021-09-13/ssp5/"
-    output_files["irrigated_areas"]       = "irrigated_areas_historical_and_ssp5_1960-2100.nc"
-    output_files["domestic_water_demand"] = "domestic_water_demand_historical_and_ssp5_1960-2100.nc"
-    output_files["industry_water_demand"] = "industry_water_demand_historical_and_ssp5_1960-2100.nc"
-    
+
+    output_files["folder"]                        = "/scratch-shared/edwin/irrigation_demand_aqueduct/test/"
+    output_files["estimate_irrigation_demand"]    = output_files["folder"] + "/estimateIrrigationDemand_monthTot_output_%4s-01-31_to_%4s-12-31.nc" 
 
     # make output folder
     output_folder = output_files["folder"]
