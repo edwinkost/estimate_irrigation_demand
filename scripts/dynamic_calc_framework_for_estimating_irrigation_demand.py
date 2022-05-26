@@ -278,7 +278,7 @@ def main():
     
     # for testing
     startDate = "2000-01-01"
-    endDate   = "2015-12-31"
+    endDate   = "2000-12-31"
 
     # a dictionary containing input files
     input_files = {}
