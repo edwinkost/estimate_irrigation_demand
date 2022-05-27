@@ -279,7 +279,10 @@ def main():
     # ~ # starting and end date
     # ~ startDate = "%s-01-01" % (str(start_year))
     # ~ endDate   = "%s-12-31" % (str(end_year))
-    
+
+    startDate = "1960-01-01"
+    endDate   = "2019-12-31"
+
 
     # a dictionary containing input files
     input_files = {}
@@ -321,9 +324,6 @@ def main():
     # ~ input_files["et0"] = "/projects/0/dfguu2/users/edwin/pcrglobwb_aqueduct_2021_daily_files/version_2021-09-16/gswp3-w5e5/historical-reference/begin_from_1960/global/netcdf_daily/" + "/referencePotET_dailyTot_output_%4s-01-31_to_%4s-12-31.nc"
     input_files["et0"] = "/projects/0/dfguu2/users/edwin/pcrglobwb_aqueduct_2021_daily_files/version_2021-09-16/gswp3-w5e5_rerun/historical-reference/begin_from_1960/global/netcdf_merged_daily_1960-2019/referencePotET_dailyTot_output_1960-01-01_to_2019-12-31.nc"
 
-
-    startDate = "2000-01-01"
-    endDate   = "2001-12-31"
 
     # a dictionary containing output files
     output_files = {}
