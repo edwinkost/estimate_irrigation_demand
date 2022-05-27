@@ -84,7 +84,7 @@ class CalcFramework(DynamicModel):
         attributeDictionary['history'    ]   = "Files are created by Edwin H. Sutanudjaja on " + str(datetime.datetime.now())
         attributeDictionary['references' ]   = "See description."
         attributeDictionary['source'     ]   = "See description."
-        attributeDictionary['comment'    ]   = "See description. Calculated on the folder " + str(output_files["folder"]) 
+        attributeDictionary['comment'    ]   = "See description. Calculated on the folder " + str(self.output_files["folder"]) 
         attributeDictionary['disclaimer' ]   = "Great care was exerted to prepare these data. Notwithstanding, use of the model and/or its outcome is the sole responsibility of the user." 
 
         # make a netcdf output file for monthly estimate irrigation demand
