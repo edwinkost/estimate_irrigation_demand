@@ -169,7 +169,11 @@ class CalcFramework(DynamicModel):
 
 
         # get reference potential evaporation (daily) - unit: m/day
-        if self.modelTime.day == 1: self.et0_file = self.input_files["et0"] % (str(self.modelTime.year), str(self.modelTime.year))
+        if self.modelTime.day == 1:
+            try:
+                self.et0_file = self.input_files["et0"] % (str(self.modelTime.year), str(self.modelTime.year))
+            except:
+                self.et0_file = self.input_files["et0"]
         self.et0 = vos.netcdf2PCRobjClone(ncFile            = self.et0_file,\
                                           varName           = "automatic",\
                                           dateInput         = self.modelTime.fulldate,\
