@@ -318,14 +318,15 @@ def main():
     input_files["pgb_out_dir"]     = str(pcrglobwb_output_folder) + "/"
     # ~ input_files["pgb_out_dir"] = "/projects/0/dfguu2/users/edwin/pcrglobwb_aqueduct_2021_monthly_annual_files/version_2021-09-16/gswp3-w5e5_rerun/historical-reference/begin_from_1960/global/netcdf/"
     
-    # - monthly reference potential evaporation (m.month-1) 
-    input_files["et0"]                            = input_files["pgb_out_dir"] + "/referencePotET_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
     # - monthly evaporation_from_irrigation (m.month-1) 
     input_files["evaporation_from_irrigation"]    = input_files["pgb_out_dir"] + "/evaporation_from_irrigation_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
 
     # - monthly nonpaddy and paddy irrigation withdrawal (m.month-1) 
     input_files["nonpaddy_irrigation_withdrawal"] = input_files["pgb_out_dir"] + "/irrNonPaddyWaterWithdrawal_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
     input_files["paddy_irrigation_withdrawal"]    = input_files["pgb_out_dir"] + "/irrPaddyWaterWithdrawal_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
+
+    # - daily reference potential evaporation (m.month-1) - note this must be given in the absolute path
+    input_files["et0"]                            = "/projects/0/dfguu2/users/edwin/pcrglobwb_aqueduct_2021_daily_files/version_2021-09-16/gswp3-w5e5/historical-reference/begin_from_1960/global/netcdf_daily/" + "/referencePotET_dailyTot_output_%4s-01-31_to_%4s-12-31.nc"
 
 
     # a dictionary containing output files
