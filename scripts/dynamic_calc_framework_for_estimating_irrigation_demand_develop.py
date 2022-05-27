@@ -164,8 +164,8 @@ class CalcFramework(DynamicModel):
                                                0.0)
         # set minimum kc - as used in PCR-GLOBWB runs
         minimum_kc = 0.2
-        self.kc_nonpaddy_daily = pcr.max(0.2, self.kc_nonpaddy_daily)
-        self.kc_paddy_daily    = pcr.max(0.2, self.kc_paddy_daily)
+        self.kc_nonpaddy_daily = pcr.max(minimum_kc, self.kc_nonpaddy_daily)
+        self.kc_paddy_daily    = pcr.max(minimum_kc, self.kc_paddy_daily)
 
 
         # get reference potential evaporation (daily) - unit: m/day
@@ -314,7 +314,8 @@ def main():
     input_files["paddy_irrigation_withdrawal"]    = input_files["pgb_out_dir"] + "/irrPaddyWaterWithdrawal_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
 
     # - daily reference potential evaporation (m.month-1) - note this must be given in the absolute path
-    input_files["et0"] = "/projects/0/dfguu2/users/edwin/pcrglobwb_aqueduct_2021_daily_files/version_2021-09-16/gswp3-w5e5/historical-reference/begin_from_1960/global/netcdf_daily/" + "/referencePotET_dailyTot_output_%4s-01-31_to_%4s-12-31.nc"
+    # ~ input_files["et0"] = "/projects/0/dfguu2/users/edwin/pcrglobwb_aqueduct_2021_daily_files/version_2021-09-16/gswp3-w5e5/historical-reference/begin_from_1960/global/netcdf_daily/" + "/referencePotET_dailyTot_output_%4s-01-31_to_%4s-12-31.nc"
+    input_files["et0"] = "/projects/0/dfguu2/users/edwin/pcrglobwb_aqueduct_2021_daily_files/version_2021-09-16/gswp3-w5e5_rerun/historical-reference/begin_from_1960/global/netcdf_merged_daily_1960-2019/referencePotET_dailyTot_output_1960-01-01_to_2019-12-31.nc"
 
 
     startDate = "2000-01-01"
