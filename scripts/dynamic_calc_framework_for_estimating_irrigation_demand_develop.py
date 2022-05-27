@@ -187,14 +187,14 @@ class CalcFramework(DynamicModel):
                                       self.kc_paddy_daily    * self.et0 * self.cell_area_paddy
         # - monthly aggregation - m3.month-1
         if self.modelTime.day == 1: self.crop_requirement_monthly = pcr.scalar(0.0)
-        self.crop_requirement_monthly += self.crop_requirement_daily
+        self.crop_requirement_monthly = self.crop_requirement_monthly + self.crop_requirement_daily
         
         # monthly irrigation requirement (including efficiency) - unit: km3/month - note this can be supplied by precipitation and irrigation withdrawal 
         if self.modelTime.isLastDayOfMonth():
             # m3.month-1
             self.irrigation_requirement = self.crop_requirement_monthly / self.efficiency
             # km3.month-1
-            self.irrigation_requirement = self.crop_requirement_monthly / 1e9
+            self.irrigation_requirement = self.irrigation_requirement / 1e9
 
         
         # get irrigation supply (km3/month): amount of water that has been withdrawn to meet irrigation demand (from PCR-GLOBWB output)
