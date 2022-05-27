@@ -84,7 +84,7 @@ class CalcFramework(DynamicModel):
         attributeDictionary['history'    ]   = "Files are created by Edwin H. Sutanudjaja on " + str(datetime.datetime.now())
         attributeDictionary['references' ]   = "See description."
         attributeDictionary['source'     ]   = "See description."
-        attributeDictionary['comment'    ]   = "See description. Calculated on the folder " + str(output_files["folder"]) 
+        attributeDictionary['comment'    ]   = "See description."
         attributeDictionary['disclaimer' ]   = "Great care was exerted to prepare these data. Notwithstanding, use of the model and/or its outcome is the sole responsibility of the user." 
 
         # make a netcdf output file for monthly estimate irrigation demand
@@ -275,49 +275,42 @@ class CalcFramework(DynamicModel):
 
 def main():
     
-    # use the following system arguments
-    start_year                          = sys.argv[1]
-    end_year                            = sys.argv[2]
-    pcrglobwb_input_folder              = sys.argv[3]
-    irrigated_area_in_hectar_input_file = sys.argv[4]
-    pcrglobwb_output_folder             = sys.argv[5]
-    output_folder_for_irrigation_demand = sys.argv[6]
-    output_file_for_irrigation_demand   = sys.argv[7]
-    
     # starting and end date
-    startDate = "%s-01-01" % (str(start_year))
-    endDate   = "%s-12-31" % (str(end_year))
+    startDate = "1960-01-01"
+    endDate   = "2019-12-31"
     
+    # ~ # for testing
+    # ~ startDate = "2000-01-01"
+    # ~ endDate   = "2005-12-31"
+
+    # ~ # for testing
+    # ~ startDate = "2000-01-01"
+    # ~ endDate   = "2001-12-31"
 
     # a dictionary containing input files
     input_files = {}
     
     # input from PCR-GLOBWB INPUT files
     # - main folder of pcrglobwb input files 
-    input_files["pgb_inp_dir"]     = str(pcrglobwb_input_folder) + "/"
-    # ~ input_files["pgb_inp_dir"] = "/projects/0/dfguu/users/edwin/data/pcrglobwb_input_aqueduct/version_2021-09-16/"
-    
+    input_files["pgb_inp_dir"] = "/projects/0/dfguu/users/edwin/data/pcrglobwb_input_aqueduct/version_2021-09-16/"
     # - clone map (-), cell area (m2)
-    input_files["clone_map"]                    = input_files["pgb_inp_dir"] + "/general/cloneMaps/clone_global_05min.map"    
-    input_files["cell_area"]                    = input_files["pgb_inp_dir"] + "/general/cdo_gridarea_clone_global_05min_correct_lats.nc"
+    input_files["clone_map"]                = input_files["pgb_inp_dir"] + "/general/cloneMaps/clone_global_05min.map"    
+    input_files["cell_area"]                = input_files["pgb_inp_dir"] + "/general/cdo_gridarea_clone_global_05min_correct_lats.nc"
     # - nonpaddy_fraction and paddy_fraction (notes that this the estimate over the entire cell area (m2.m-2)   
-    input_files["nonpaddy_fraction"]            = input_files["pgb_inp_dir"] + "/general/fractionNonPaddy_extrapolated.map"    
-    input_files["paddy_fraction"]               = input_files["pgb_inp_dir"] + "/general/fractionPaddy_extrapolated.map"
+    input_files["nonpaddy_fraction"]        = input_files["pgb_inp_dir"] + "/general/fractionNonPaddy_extrapolated.map"    
+    input_files["paddy_fraction"]           = input_files["pgb_inp_dir"] + "/general/fractionPaddy_extrapolated.map"
     # - nonpaddy and paddy kc (dimensionless)  
-    input_files["kc_nonpaddy_daily"]            = input_files["pgb_inp_dir"] + "/general/nonpaddy_cropfactor_filled.nc"    
-    input_files["kc_paddy_daily"]               = input_files["pgb_inp_dir"] + "/general/paddy_cropfactor_filled.nc"
-    # - irrigation efficiency                   
-    input_files["efficiency"]                   = input_files["pgb_inp_dir"] + "/general/efficiency.nc"
+    input_files["kc_nonpaddy_daily"]        = input_files["pgb_inp_dir"] + "/general/nonpaddy_cropfactor_filled.nc"    
+    input_files["kc_paddy_daily"]           = input_files["pgb_inp_dir"] + "/general/paddy_cropfactor_filled.nc"
+    # - irrigation efficiency  
+    input_files["efficiency"]               = input_files["pgb_inp_dir"] + "/general/efficiency.nc"
     # - irrigated_area_in_hectar 
-    input_files["irrigated_area_in_hectar"]     = input_files["pgb_inp_dir"] + "/%s" % (irrigated_area_in_hectar_input_file)
-    # ~ input_files["irrigated_area_in_hectar"] = input_files["pgb_inp_dir"] + "/historical_and_ssp_files/irrigated_areas_historical_1960-2019.nc"
+    input_files["irrigated_area_in_hectar"] = input_files["pgb_inp_dir"] + "/historical_and_ssp_files/irrigated_areas_historical_1960-2019.nc"
 
 
     # input from PCR-GLOBWB run OUTPUT files
     # - main folder of pcrglobwb input files 
-    input_files["pgb_out_dir"]     = str(pcrglobwb_output_folder) + "/"
-    # ~ input_files["pgb_out_dir"] = "/projects/0/dfguu2/users/edwin/pcrglobwb_aqueduct_2021_monthly_annual_files/version_2021-09-16/gswp3-w5e5_rerun/historical-reference/begin_from_1960/global/netcdf/"
-    
+    input_files["pgb_out_dir"] = "/projects/0/dfguu2/users/edwin/pcrglobwb_aqueduct_2021_monthly_annual_files/version_2021-09-16/gswp3-w5e5_rerun/historical-reference/begin_from_1960/global/netcdf/"
     # - monthly reference potential evaporation (m.month-1) 
     input_files["et0"]                            = input_files["pgb_out_dir"] + "/referencePotET_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
     # - monthly evaporation_from_irrigation (m.month-1) 
@@ -331,12 +324,8 @@ def main():
     # a dictionary containing output files
     output_files = {}
 
-    # ~ output_files["folder"]                        = "/scratch-shared/edwin/irrigation_demand_aqueduct/test/"
-    # ~ output_files["estimate_irrigation_demand"]    = output_files["folder"] + "/estimateIrrigationDemand_monthTot_output.nc" 
-
-    output_files["folder"]                            = str(output_folder_for_irrigation_demand)
-    output_files["estimate_irrigation_demand"]        = output_files["folder"] + str(output_file_for_irrigation_demand)
-
+    output_files["folder"]                        = "/scratch-shared/edwin/irrigation_demand_aqueduct/test/"
+    output_files["estimate_irrigation_demand"]    = output_files["folder"] + "/estimateIrrigationDemand_monthTot_output.nc" 
 
     # make output folder
     output_folder = output_files["folder"]
