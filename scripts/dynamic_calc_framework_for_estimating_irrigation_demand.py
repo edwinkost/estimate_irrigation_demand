@@ -267,15 +267,15 @@ class CalcFramework(DynamicModel):
 
 def main():
     
-    # ~ # use the following system arguments
-    # ~ start_year                          = sys.argv[1]
-    # ~ end_year                            = sys.argv[2]
-    # ~ pcrglobwb_input_folder              = sys.argv[3]
-    # ~ irrigated_area_in_hectar_input_file = sys.argv[4]
-    # ~ pcrglobwb_monthly_output_folder     = sys.argv[5]
-    # ~ pcrglobwb_daily_output_folder       = sys.argv[6]
-    # ~ output_folder_for_irrigation_demand = sys.argv[7]
-    # ~ output_file_for_irrigation_demand   = sys.argv[8]
+    # use the following system arguments
+    start_year                          = sys.argv[1]
+    end_year                            = sys.argv[2]
+    pcrglobwb_input_folder              = sys.argv[3]
+    irrigated_area_in_hectar_input_file = sys.argv[4]
+    pcrglobwb_monthly_output_folder     = sys.argv[5]
+    pcrglobwb_daily_output_folder       = sys.argv[6]
+    output_folder_for_irrigation_demand = sys.argv[7]
+    output_file_for_irrigation_demand   = sys.argv[8]
     
     # starting and end date
     startDate = "%s-01-01" % (str(start_year))
