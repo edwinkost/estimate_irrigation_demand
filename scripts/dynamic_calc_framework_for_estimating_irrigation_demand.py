@@ -329,11 +329,11 @@ def main():
     # a dictionary containing output files
     output_files = {}
 
-    output_files["folder"]                        = "/scratch-shared/edwin/irrigation_demand_aqueduct/test_with_daily/"
-    output_files["estimate_irrigation_demand"]    = output_files["folder"] + "/estimateIrrigationDemand_monthTot_output.nc" 
+    # ~ output_files["folder"]                        = "/scratch-shared/edwin/irrigation_demand_aqueduct/test_with_daily/"
+    # ~ output_files["estimate_irrigation_demand"]    = output_files["folder"] + "/estimateIrrigationDemand_monthTot_output.nc" 
 
-    # ~ output_files["folder"]                            = str(output_folder_for_irrigation_demand) + "/"
-    # ~ output_files["estimate_irrigation_demand"]        = output_files["folder"] + "/" + str(output_file_for_irrigation_demand)
+    output_files["folder"]                            = str(output_folder_for_irrigation_demand) + "/"
+    output_files["estimate_irrigation_demand"]        = output_files["folder"] + "/" + str(output_file_for_irrigation_demand)
 
 
     # make output folder
