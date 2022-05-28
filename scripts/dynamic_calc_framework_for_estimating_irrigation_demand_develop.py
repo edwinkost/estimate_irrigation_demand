@@ -218,24 +218,35 @@ class CalcFramework(DynamicModel):
         # get irrigation withdrawal (km3/month): amount of water that has been withdrawn to meet irrigation demand (from PCR-GLOBWB output)
         if self.modelTime.isLastDayOfMonth():
 
-            # irrNonPaddyWithdrawal (output from PCR-GLOBWB runs) - unit: m/month
-            self.nonpaddy_irrigation_withdrawal_file = self.input_files["nonpaddy_irrigation_withdrawal"] % (str(self.modelTime.year), str(self.modelTime.year))
-            self.irrNonPaddyWithdrawal = vos.netcdf2PCRobjClone(ncFile            = self.nonpaddy_irrigation_withdrawal_file,\
-                                                                varName           = "automatic",\
-                                                                dateInput         = self.modelTime.fulldate,\
-                                                                useDoy            = None,\
-                                                                cloneMapFileName  = self.cloneMapFileName)
-            
-            # irrPaddyWithdrawal (output from PCR-GLOBWB runs) - unit: m/month
-            self.paddy_irrigation_withdrawal_file = self.input_files["paddy_irrigation_withdrawal"] % (str(self.modelTime.year), str(self.modelTime.year))
-            self.irrPaddyWithdrawal    = vos.netcdf2PCRobjClone(ncFile            = self.paddy_irrigation_withdrawal_file,\
-                                                                varName           = "automatic",\
-                                                                dateInput         = self.modelTime.fulldate,\
-                                                                useDoy            = None,\
-                                                                cloneMapFileName  = self.cloneMapFileName)
+            # unit: m.month-1
+            self.irrigation_withdrawal_file = self.input_files["total_irrigation_withdrawal"] % (str(self.modelTime.year), str(self.modelTime.year))
+            irrigation_withdrawal = vos.netcdf2PCRobjClone(ncFile            = self.irrigation_withdrawal_file,\
+                                                           varName           = "automatic",\
+                                                           dateInput         = self.modelTime.fulldate,\
+                                                           useDoy            = None,\
+                                                           cloneMapFileName  = self.cloneMapFileName)
             
             # total irrigation withdrawal (amount of water that has been supplied to meet irrigation demand) - unit: km3/month
-            self.irrigation_withdrawal = (self.irrPaddyWithdrawal + self.irrNonPaddyWithdrawal) * self.cell_area_total / 1e9
+            self.irrigation_withdrawal = irrigation_withdrawal * self.cell_area_total / 1e9
+
+
+            # ~ # the following is for the case using irrNonPaddyWithdrawal and irrPaddyWithdrawal (yet, results will be the same as above)
+            # ~ # irrNonPaddyWithdrawal (output from PCR-GLOBWB runs) - unit: m/month
+            # ~ self.nonpaddy_irrigation_withdrawal_file = self.input_files["nonpaddy_irrigation_withdrawal"] % (str(self.modelTime.year), str(self.modelTime.year))
+            # ~ self.irrNonPaddyWithdrawal = vos.netcdf2PCRobjClone(ncFile            = self.nonpaddy_irrigation_withdrawal_file,\
+                                                                # ~ varName           = "automatic",\
+                                                                # ~ dateInput         = self.modelTime.fulldate,\
+                                                                # ~ useDoy            = None,\
+                                                                # ~ cloneMapFileName  = self.cloneMapFileName)
+            # ~ # irrPaddyWithdrawal (output from PCR-GLOBWB runs) - unit: m/month
+            # ~ self.paddy_irrigation_withdrawal_file = self.input_files["paddy_irrigation_withdrawal"] % (str(self.modelTime.year), str(self.modelTime.year))
+            # ~ self.irrPaddyWithdrawal    = vos.netcdf2PCRobjClone(ncFile            = self.paddy_irrigation_withdrawal_file,\
+                                                                # ~ varName           = "automatic",\
+                                                                # ~ dateInput         = self.modelTime.fulldate,\
+                                                                # ~ useDoy            = None,\
+                                                                # ~ cloneMapFileName  = self.cloneMapFileName)
+            # ~ # total irrigation withdrawal (amount of water that has been supplied to meet irrigation demand) - unit: km3/month
+            # ~ self.irrigation_withdrawal = (self.irrPaddyWithdrawal + self.irrNonPaddyWithdrawal) * self.cell_area_total / 1e9
             			
 
         # estimate monthly irrigation demand (km3/month)
@@ -320,6 +331,8 @@ def main():
     # - monthly nonpaddy and paddy irrigation withdrawal (m.month-1) 
     input_files["nonpaddy_irrigation_withdrawal"] = input_files["pgb_monthly_out_dir"] + "/irrNonPaddyWaterWithdrawal_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
     input_files["paddy_irrigation_withdrawal"]    = input_files["pgb_monthly_out_dir"] + "/irrPaddyWaterWithdrawal_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
+    # - if not available - we can also use its total withdrawal (m.month-1) - note the following does not include livestock
+    input_files["total_irrigation_withdrawal"]    = input_files["pgb_monthly_out_dir"] + "/irrGrossDemand_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
 
     # - daily reference potential evaporation (m.month-1) - note this may be given in a different folder than the monthly output folder
     # ~ input_files["pgb_daily_out_dir"] = str(pcrglobwb_daily_output_folder) + "/"
