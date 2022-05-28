@@ -341,7 +341,7 @@ def main():
     try:
         os.makedirs(output_folder)
     except:
-        # ~ os.system('rm -r ' + output_folder + "/t") - THIS IS DANGEROUS
+        os.system('rm -r ' + output_folder + "/*") ### THIS IS DANGEROUS
         pass
 
     # prepare logger and its directory
