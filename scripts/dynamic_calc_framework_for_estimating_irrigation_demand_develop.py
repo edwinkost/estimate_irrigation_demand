@@ -329,8 +329,8 @@ def main():
     input_files["evaporation_from_irrigation"]    = input_files["pgb_monthly_out_dir"] + "/evaporation_from_irrigation_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
 
     # - monthly nonpaddy and paddy irrigation withdrawal (m.month-1) 
-    input_files["nonpaddy_irrigation_withdrawal"] = input_files["pgb_monthly_out_dir"] + "/irrNonPaddyWaterWithdrawal_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
-    input_files["paddy_irrigation_withdrawal"]    = input_files["pgb_monthly_out_dir"] + "/irrPaddyWaterWithdrawal_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
+    # ~ input_files["nonpaddy_irrigation_withdrawal"] = input_files["pgb_monthly_out_dir"] + "/irrNonPaddyWaterWithdrawal_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
+    # ~ input_files["paddy_irrigation_withdrawal"]    = input_files["pgb_monthly_out_dir"] + "/irrPaddyWaterWithdrawal_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
     # - if not available - we can also use its total withdrawal (m.month-1) - note the following does not include livestock
     input_files["total_irrigation_withdrawal"]    = input_files["pgb_monthly_out_dir"] + "/irrGrossDemand_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
 
