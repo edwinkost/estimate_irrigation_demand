@@ -272,16 +272,17 @@ def main():
     # ~ end_year                            = sys.argv[2]
     # ~ pcrglobwb_input_folder              = sys.argv[3]
     # ~ irrigated_area_in_hectar_input_file = sys.argv[4]
-    # ~ pcrglobwb_output_folder             = sys.argv[5]
-    # ~ output_folder_for_irrigation_demand = sys.argv[6]
-    # ~ output_file_for_irrigation_demand   = sys.argv[7]
+    # ~ pcrglobwb_monthly_output_folder     = sys.argv[5]
+    # ~ pcrglobwb_daily_output_folder       = sys.argv[6]
+    # ~ output_folder_for_irrigation_demand = sys.argv[7]
+    # ~ output_file_for_irrigation_demand   = sys.argv[8]
     
-    # ~ # starting and end date
-    # ~ startDate = "%s-01-01" % (str(start_year))
-    # ~ endDate   = "%s-12-31" % (str(end_year))
+    # starting and end date
+    startDate = "%s-01-01" % (str(start_year))
+    endDate   = "%s-12-31" % (str(end_year))
 
-    startDate = "1960-01-01"
-    endDate   = "2019-12-31"
+    # ~ startDate = "1960-01-01"
+    # ~ endDate   = "2019-12-31"
 
 
     # a dictionary containing input files
@@ -289,8 +290,8 @@ def main():
     
     # input from PCR-GLOBWB INPUT files
     # - main folder of pcrglobwb input files 
-    # ~ input_files["pgb_inp_dir"]     = str(pcrglobwb_input_folder) + "/"
-    input_files["pgb_inp_dir"]         = "/projects/0/dfguu/users/edwin/data/pcrglobwb_input_aqueduct/version_2021-09-16/"
+    input_files["pgb_inp_dir"]     = str(pcrglobwb_input_folder) + "/"
+    # ~ input_files["pgb_inp_dir"] = "/projects/0/dfguu/users/edwin/data/pcrglobwb_input_aqueduct/version_2021-09-16/"
     
     # - clone map (-), cell area (m2)
     input_files["clone_map"]                    = input_files["pgb_inp_dir"] + "/general/cloneMaps/clone_global_05min.map"    
@@ -304,25 +305,25 @@ def main():
     # - irrigation efficiency                   
     input_files["efficiency"]                   = input_files["pgb_inp_dir"] + "/general/efficiency.nc"
     # - irrigated_area_in_hectar 
-    # ~ input_files["irrigated_area_in_hectar"] = input_files["pgb_inp_dir"] + "/%s" % (irrigated_area_in_hectar_input_file)
-    input_files["irrigated_area_in_hectar"]     = input_files["pgb_inp_dir"] + "/historical_and_ssp_files/irrigated_areas_historical_1960-2019.nc"
+    input_files["irrigated_area_in_hectar"]     = input_files["pgb_inp_dir"] + "/%s" % (irrigated_area_in_hectar_input_file)
+    # ~ input_files["irrigated_area_in_hectar"] = input_files["pgb_inp_dir"] + "/historical_and_ssp_files/irrigated_areas_historical_1960-2019.nc"
 
 
     # input from PCR-GLOBWB run OUTPUT files
-    # - main folder of pcrglobwb input files 
-    # ~ input_files["pgb_out_dir"]     = str(pcrglobwb_output_folder) + "/"
-    input_files["pgb_out_dir"]         = "/projects/0/dfguu2/users/edwin/pcrglobwb_aqueduct_2021_monthly_annual_files/version_2021-09-16/gswp3-w5e5_rerun/historical-reference/begin_from_1960/global/netcdf/"
+    # - main folder of pcrglobwb monthly input files 
+    input_files["pgb_monthly_out_dir"]          = str(pcrglobwb_monthly_output_folder) + "/"
+    # ~ input_files["pgb_monthly_out_dir"]      = "/projects/0/dfguu2/users/edwin/pcrglobwb_aqueduct_2021_monthly_annual_files/version_2021-09-16/gswp3-w5e5_rerun/historical-reference/begin_from_1960/global/netcdf/"
     
     # - monthly evaporation_from_irrigation (m.month-1) 
-    input_files["evaporation_from_irrigation"]    = input_files["pgb_out_dir"] + "/evaporation_from_irrigation_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
+    input_files["evaporation_from_irrigation"]    = input_files["pgb_monthly_out_dir"] + "/evaporation_from_irrigation_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
 
     # - monthly nonpaddy and paddy irrigation withdrawal (m.month-1) 
-    input_files["nonpaddy_irrigation_withdrawal"] = input_files["pgb_out_dir"] + "/irrNonPaddyWaterWithdrawal_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
-    input_files["paddy_irrigation_withdrawal"]    = input_files["pgb_out_dir"] + "/irrPaddyWaterWithdrawal_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
+    input_files["nonpaddy_irrigation_withdrawal"] = input_files["pgb_monthly_out_dir"] + "/irrNonPaddyWaterWithdrawal_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
+    input_files["paddy_irrigation_withdrawal"]    = input_files["pgb_monthly_out_dir"] + "/irrPaddyWaterWithdrawal_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
 
-    # - daily reference potential evaporation (m.month-1) - note this must be given in the absolute path
-    # ~ input_files["et0"] = "/projects/0/dfguu2/users/edwin/pcrglobwb_aqueduct_2021_daily_files/version_2021-09-16/gswp3-w5e5/historical-reference/begin_from_1960/global/netcdf_daily/" + "/referencePotET_dailyTot_output_%4s-01-31_to_%4s-12-31.nc"
-    input_files["et0"] = "/projects/0/dfguu2/users/edwin/pcrglobwb_aqueduct_2021_daily_files/version_2021-09-16/gswp3-w5e5_rerun/historical-reference/begin_from_1960/global/netcdf_merged_daily_1960-2019/referencePotET_dailyTot_output_1960-01-01_to_2019-12-31.nc"
+    # - daily reference potential evaporation (m.month-1) - note this may be given in a different folder than the monthly output folder
+    input_files["pgb_daily_out_dir"] = str(pcrglobwb_daily_output_folder) + "/"
+    input_files["et0"] = input_files["pgb_daily_out_dir"] + "referencePotET_dailyTot_output_%4s-01-01_to_%4s-12-31.nc"
 
 
     # a dictionary containing output files

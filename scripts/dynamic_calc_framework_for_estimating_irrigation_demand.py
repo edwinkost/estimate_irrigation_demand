@@ -147,7 +147,7 @@ class CalcFramework(DynamicModel):
             self.efficiency = pcr.max(0.1, self.efficiency)
 
 
-        # get crop coefficient values (daily) for nonpaddy and calculate monthly average values - dimensionless
+        # get crop coefficient values (daily) for nonpaddy and paddy - dimensionless
         self.kc_nonpaddy_daily     = pcr.cover(
                                                vos.netcdf2PCRobjClone(ncFile            = self.input_files["kc_nonpaddy_daily"],\
                                                                       varName           = "automatic",\
@@ -155,14 +155,6 @@ class CalcFramework(DynamicModel):
                                                                       useDoy            = "daily_seasonal",\
                                                                       cloneMapFileName  = self.cloneMapFileName), 
                                                0.0)
-        # - monthly aggregation 
-        if self.modelTime.day == 1: self.kc_nonpaddy_monthly_agg = pcr.scalar(0.0)
-        self.kc_nonpaddy_monthly_agg += self.kc_nonpaddy_daily
-        # - monthly average values
-        if self.modelTime.isLastDayOfMonth():
-            self.kc_nonpaddy_monthly_average = self.kc_nonpaddy_monthly_agg / self.modelTime.day
-        
-        # get crop coefficient values (daily) for paddy and calculate monthly average values - dimensionless
         self.kc_paddy_daily        = pcr.cover(
                                                vos.netcdf2PCRobjClone(ncFile            = self.input_files["kc_paddy_daily"],\
                                                                       varName           = "automatic",\
@@ -170,39 +162,39 @@ class CalcFramework(DynamicModel):
                                                                       useDoy            = "daily_seasonal",\
                                                                       cloneMapFileName  = self.cloneMapFileName), 
                                                0.0)
-        # - monthly aggregation 
-        if self.modelTime.day == 1: self.kc_paddy_monthly_agg = pcr.scalar(0.0)
-        self.kc_paddy_monthly_agg += self.kc_paddy_daily
-        # - monthly average values
-        if self.modelTime.isLastDayOfMonth():
-            self.kc_paddy_monthly_average = self.kc_paddy_monthly_agg / self.modelTime.day
+        # set minimum kc - as used in PCR-GLOBWB runs
+        minimum_kc = 0.2
+        self.kc_nonpaddy_daily = pcr.max(minimum_kc, self.kc_nonpaddy_daily)
+        self.kc_paddy_daily    = pcr.max(minimum_kc, self.kc_paddy_daily)
+
+
+        # get reference potential evaporation (daily) - unit: m/day
+        if self.modelTime.day == 1:
+            try:
+                self.et0_file = self.input_files["et0"] % (str(self.modelTime.year), str(self.modelTime.year))
+            except:
+                self.et0_file = self.input_files["et0"]
+        self.et0 = vos.netcdf2PCRobjClone(ncFile            = self.et0_file,\
+                                          varName           = "automatic",\
+                                          dateInput         = self.modelTime.fulldate,\
+                                          useDoy            = None,\
+                                          cloneMapFileName  = self.cloneMapFileName)
+
+
+        # calculate crop requirement (still not including efficiency) for irrigated crops - calculated from potential evaporation
+        # - daily value - m3.day-1
+        self.crop_requirement_daily = self.kc_nonpaddy_daily * self.et0 * self.cell_area_nonpaddy +\
+                                      self.kc_paddy_daily    * self.et0 * self.cell_area_paddy
+        # - monthly aggregation - m3.month-1
+        if self.modelTime.day == 1: self.crop_requirement_monthly = pcr.scalar(0.0)
+        self.crop_requirement_monthly = self.crop_requirement_monthly + self.crop_requirement_daily
         
-        # get monthly reference potential evaporation - unit: m/month
+        # monthly irrigation requirement (including efficiency) - unit: km3/month - note this can be supplied by precipitation and irrigation withdrawal 
         if self.modelTime.isLastDayOfMonth():
-            
-            self.et0_file = self.input_files["et0"] % (str(self.modelTime.year), str(self.modelTime.year))
-            
-            self.et0 = vos.netcdf2PCRobjClone(ncFile            = self.et0_file,\
-                                              varName           = "automatic",\
-                                              dateInput         = self.modelTime.fulldate,\
-                                              useDoy            = None,\
-                                              cloneMapFileName  = self.cloneMapFileName)
-
-
-        # calculate monthly irrigation water requirement - unit: km3/month
-        if self.modelTime.isLastDayOfMonth():
-
-            # set minimum kc
-            minimum_kc = 0.2
-            
-            # crop requirement (still not including efficiency) - unit: m3/month
-            self.crop_requirement = pcr.max(minimum_kc, self.kc_nonpaddy_monthly_average) * self.et0 * self.cell_area_nonpaddy +\
-                                    pcr.max(minimum_kc, self.kc_paddy_monthly_average   ) * self.et0 * self.cell_area_paddy
-            # - km3/month
-            self.crop_requirement = self.crop_requirement / 1e9
-
-            # irrigation requirement (including efficiency) - unit: km3/month - note this can be supplied by precipitation and irrigation withdrawal 
-            self.irrigation_requirement = self.crop_requirement / self.efficiency
+            # m3.month-1
+            self.irrigation_requirement = self.crop_requirement_monthly / self.efficiency
+            # km3.month-1
+            self.irrigation_requirement = self.irrigation_requirement / 1e9
 
         
         # get irrigation supply (km3/month): amount of water that has been withdrawn to meet irrigation demand (from PCR-GLOBWB output)
@@ -275,19 +267,23 @@ class CalcFramework(DynamicModel):
 
 def main():
     
-    # use the following system arguments
-    start_year                          = sys.argv[1]
-    end_year                            = sys.argv[2]
-    pcrglobwb_input_folder              = sys.argv[3]
-    irrigated_area_in_hectar_input_file = sys.argv[4]
-    pcrglobwb_output_folder             = sys.argv[5]
-    output_folder_for_irrigation_demand = sys.argv[6]
-    output_file_for_irrigation_demand   = sys.argv[7]
+    # ~ # use the following system arguments
+    # ~ start_year                          = sys.argv[1]
+    # ~ end_year                            = sys.argv[2]
+    # ~ pcrglobwb_input_folder              = sys.argv[3]
+    # ~ irrigated_area_in_hectar_input_file = sys.argv[4]
+    # ~ pcrglobwb_monthly_output_folder     = sys.argv[5]
+    # ~ pcrglobwb_daily_output_folder       = sys.argv[6]
+    # ~ output_folder_for_irrigation_demand = sys.argv[7]
+    # ~ output_file_for_irrigation_demand   = sys.argv[8]
     
     # starting and end date
     startDate = "%s-01-01" % (str(start_year))
     endDate   = "%s-12-31" % (str(end_year))
-    
+
+    # ~ startDate = "1960-01-01"
+    # ~ endDate   = "2019-12-31"
+
 
     # a dictionary containing input files
     input_files = {}
@@ -314,29 +310,30 @@ def main():
 
 
     # input from PCR-GLOBWB run OUTPUT files
-    # - main folder of pcrglobwb input files 
-    input_files["pgb_out_dir"]     = str(pcrglobwb_output_folder) + "/"
-    # ~ input_files["pgb_out_dir"] = "/projects/0/dfguu2/users/edwin/pcrglobwb_aqueduct_2021_monthly_annual_files/version_2021-09-16/gswp3-w5e5_rerun/historical-reference/begin_from_1960/global/netcdf/"
+    # - main folder of pcrglobwb monthly input files 
+    input_files["pgb_monthly_out_dir"]          = str(pcrglobwb_monthly_output_folder) + "/"
+    # ~ input_files["pgb_monthly_out_dir"]      = "/projects/0/dfguu2/users/edwin/pcrglobwb_aqueduct_2021_monthly_annual_files/version_2021-09-16/gswp3-w5e5_rerun/historical-reference/begin_from_1960/global/netcdf/"
     
     # - monthly evaporation_from_irrigation (m.month-1) 
-    input_files["evaporation_from_irrigation"]    = input_files["pgb_out_dir"] + "/evaporation_from_irrigation_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
+    input_files["evaporation_from_irrigation"]    = input_files["pgb_monthly_out_dir"] + "/evaporation_from_irrigation_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
 
     # - monthly nonpaddy and paddy irrigation withdrawal (m.month-1) 
-    input_files["nonpaddy_irrigation_withdrawal"] = input_files["pgb_out_dir"] + "/irrNonPaddyWaterWithdrawal_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
-    input_files["paddy_irrigation_withdrawal"]    = input_files["pgb_out_dir"] + "/irrPaddyWaterWithdrawal_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
+    input_files["nonpaddy_irrigation_withdrawal"] = input_files["pgb_monthly_out_dir"] + "/irrNonPaddyWaterWithdrawal_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
+    input_files["paddy_irrigation_withdrawal"]    = input_files["pgb_monthly_out_dir"] + "/irrPaddyWaterWithdrawal_monthTot_output_%4s-01-31_to_%4s-12-31.nc"
 
-    # - daily reference potential evaporation (m.month-1) - note this must be given in the absolute path
-    input_files["et0"]                            = "/projects/0/dfguu2/users/edwin/pcrglobwb_aqueduct_2021_daily_files/version_2021-09-16/gswp3-w5e5/historical-reference/begin_from_1960/global/netcdf_daily/" + "/referencePotET_dailyTot_output_%4s-01-31_to_%4s-12-31.nc"
+    # - daily reference potential evaporation (m.month-1) - note this may be given in a different folder than the monthly output folder
+    input_files["pgb_daily_out_dir"] = str(pcrglobwb_daily_output_folder) + "/"
+    input_files["et0"] = input_files["pgb_daily_out_dir"] + "referencePotET_dailyTot_output_%4s-01-01_to_%4s-12-31.nc"
 
 
     # a dictionary containing output files
     output_files = {}
 
-    # ~ output_files["folder"]                        = "/scratch-shared/edwin/irrigation_demand_aqueduct/test/"
-    # ~ output_files["estimate_irrigation_demand"]    = output_files["folder"] + "/estimateIrrigationDemand_monthTot_output.nc" 
+    output_files["folder"]                        = "/scratch-shared/edwin/irrigation_demand_aqueduct/test_with_daily/"
+    output_files["estimate_irrigation_demand"]    = output_files["folder"] + "/estimateIrrigationDemand_monthTot_output.nc" 
 
-    output_files["folder"]                            = str(output_folder_for_irrigation_demand) + "/"
-    output_files["estimate_irrigation_demand"]        = output_files["folder"] + "/" + str(output_file_for_irrigation_demand)
+    # ~ output_files["folder"]                            = str(output_folder_for_irrigation_demand) + "/"
+    # ~ output_files["estimate_irrigation_demand"]        = output_files["folder"] + "/" + str(output_file_for_irrigation_demand)
 
 
     # make output folder
