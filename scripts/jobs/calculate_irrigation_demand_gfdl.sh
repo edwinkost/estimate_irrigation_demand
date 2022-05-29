@@ -20,8 +20,8 @@
 # load all modules (software) needed
 . /quanta1/home/sutan101/load_my_miniconda_and_my_default_env.sh
 
-# use all cores
-export PCRASTER_NR_WORKER_THREADS=96
+# use 24 cores (there are 4 processes in total, hence 96 cores will be used)
+export PCRASTER_NR_WORKER_THREADS=24
 
 
 # go to the script folder
